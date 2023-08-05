@@ -1,20 +1,20 @@
-#Build latest x-ui from source
 FROM golang:bullseye AS builder
-WORKDIR /app
-ARG TARGETARCH 
-RUN apk --no-cache --update add build-base gcc wget unzip
-COPY . .
-RUN env CGO_ENABLED=1 go build -o build/x-ui main.go
-RUN ./DockerInit.sh "$TARGETARCH"
+ARG XRAY_UI_REPO="https://github.com/MODSBOTS-GCP/radepa-x-ui"
+RUN git clone ${XRAY_UI_REPO} --depth=1
+WORKDIR /go/radepa-x-ui
+RUN go build -a -ldflags "-linkmode external -extldflags '-static' -s -w"
 
-
-#Build app image using latest x-ui
 FROM alpine
+LABEL org.opencontainers.image.authors="https://github.com/jvdi"
+COPY --from=builder /go/radepa-x-ui/radepa-x-ui /usr/local/bin/xray-ui
+
 ENV TZ=Asia/Tehran
-WORKDIR /app
+RUN apk add --no-cache ca-certificates tzdata 
 
-RUN apk add ca-certificates tzdata
+ARG TARGETARCH
+COPY --from=teddysun/xray /usr/bin/xray /usr/local/bin/bin/xray-linux-${TARGETARCH}
+COPY --from=teddysun/xray /usr/share/xray/ /usr/local/bin/bin/
 
-COPY --from=builder  /app/build/ /app/
-VOLUME [ "/etc/x-ui" ]
-ENTRYPOINT [ "/app/x-ui" ]
+VOLUME [ "/etc/xray-ui" ]
+WORKDIR /usr/local/bin
+CMD [ "xray-ui" ]
