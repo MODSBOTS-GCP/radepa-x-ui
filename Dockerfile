@@ -6,7 +6,7 @@ RUN go build -a -ldflags "-linkmode external -extldflags '-static' -s -w"
 
 FROM alpine
 LABEL org.opencontainers.image.authors="https://github.com/jvdi"
-COPY --from=builder /go/radepa-x-ui/radepa-x-ui /usr/local/bin/radepa-x-ui
+COPY --from=builder /go/radepa-x-ui /usr/local/bin/radepa-x-ui
 
 ENV TZ=Asia/Tehran
 RUN apk add --no-cache ca-certificates tzdata 
